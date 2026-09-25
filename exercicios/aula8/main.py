@@ -18,7 +18,7 @@ def main() -> None:
     )
 
     demand_vector = scanner.get_list(
-        num_elements=n, element_label="depósito", message="Input dos depósitos"
+        num_elements=m, element_label="depósito", message="Input dos depósitos"
     )
 
     cost_matrix = scanner.get_cost_matrix(n, m)
@@ -38,7 +38,7 @@ def main() -> None:
         case 3:
             resultado = vogel.solve(cost_matrix, production_vector, demand_vector)
 
-    print("Resultado: ", resultado)
+    print("Resultado:", resultado, sep="\n")
 
 
 if __name__ == "__main__":
