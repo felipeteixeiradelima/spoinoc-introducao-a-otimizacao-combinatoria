@@ -1,8 +1,6 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from algoritmo_genetico import ResultadoExecucao, executar_algoritmo_genetico
 from cidade import carregar_cidades_de_arquivo
 
