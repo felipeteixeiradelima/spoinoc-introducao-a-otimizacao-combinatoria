@@ -3,16 +3,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from algoritmo_genetico import ResultadoExecucao, executar_algoritmo_genetico
 from cidade import carregar_cidades_de_arquivo
-from algoritmo_genetico import executar_algoritmo_genetico, ResultadoExecucao
-
-
-if sys.platform.startswith("win"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
 
 
 def obter_caminho_base() -> str:
@@ -54,14 +46,14 @@ def exibir_resumo_final(resultado: ResultadoExecucao) -> None:
     print("\n" + "=" * 60)
     print("RESULTADO FINAL DA OTIMIZAÇÃO")
     print("=" * 60)
-    print(f"Total de gerações executadas: 2000")
-    print(f"Tamanho da população: 100 indivíduos")
-    print(f"Taxa de mutação: 10%")
+    print("Total de gerações executadas: 2000")
+    print("Tamanho da população: 100 indivíduos")
+    print("Taxa de mutação: 10%")
     print(f"Tempo total de processamento: {resultado.tempo_execucao_segundos:.2f} segundos")
     print("-" * 60)
     print(f"Melhor distância obtida: {resultado.melhor_distancia:.4f}")
     print(f"Melhor sequência (vetor): {resultado.melhor_rota}")
-    print(f"Circuito fechado do Caixeiro:")
+    print("Circuito fechado do Caixeiro:")
     print(formatar_ciclo_rota(resultado.melhor_rota))
     print("=" * 60)
 

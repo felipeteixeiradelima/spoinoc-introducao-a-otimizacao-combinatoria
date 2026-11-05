@@ -4,19 +4,15 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from cidade import Cidade, carregar_cidades_de_arquivo
 from algoritmo_genetico import (
+    aplicar_mutacao,
     calcular_distancia_euclidiana,
-    calcular_distancia_total,
+    crossover_um_ponto,
+    executar_algoritmo_genetico,
     gerar_populacao_inicial,
     selecionar_pais,
-    crossover_um_ponto,
-    gerar_filhos_por_crossover,
-    substituir_pais_por_filhos,
-    aplicar_mutacao,
-    aplicar_mutacoes_na_populacao,
-    executar_algoritmo_genetico,
 )
+from cidade import Cidade, carregar_cidades_de_arquivo
 
 
 class TesteAlgoritmoGeneticoTSP(unittest.TestCase):

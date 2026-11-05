@@ -2,6 +2,7 @@ import math
 import random
 import time
 from dataclasses import dataclass
+
 from cidade import Cidade
 
 
