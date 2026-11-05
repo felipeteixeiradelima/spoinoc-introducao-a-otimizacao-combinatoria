@@ -4,6 +4,13 @@ Implementação em Python de um Algoritmo Genético para solucionar o Problema d
 
 ---
 
+## Autores
+
+- Amanda Jen - **SP3154068**
+- Felipe Teixeira de Lima - **SP3155048**
+
+---
+
 ## Características da Implementação
 
 | Parâmetro | Configuração |
