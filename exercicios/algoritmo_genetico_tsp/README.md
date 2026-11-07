@@ -101,18 +101,6 @@ Para validar os operadores genéticos, leitura dos dados e integridade das permu
 python exercicios/algoritmo_genetico_tsp/testes.py
 ```
 
-### 4. Verificação de Código com Ruff
-
-Para rodar a verificação e formatação com o Ruff:
-
-```bash
-# Verificação de linting:
-ruff check exercicios/algoritmo_genetico_tsp/
-
-# Verificação de formatação:
-ruff format --check exercicios/algoritmo_genetico_tsp/
-```
-
 ---
 
 ## Detalhes dos Operadores Implementados
