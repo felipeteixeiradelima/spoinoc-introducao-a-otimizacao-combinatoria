@@ -2,8 +2,24 @@ import math
 import random
 import time
 from dataclasses import dataclass
+from enum import Enum
 
 from cidade import Cidade
+
+
+class MetodoAptidao(str, Enum):
+    TRANSLACAO = "translacao"
+    ESCALONAMENTO = "escalonamento"
+
+
+class MetodoSelecao(str, Enum):
+    RODA_DA_ROLETA = "roleta"
+    TORNEIO = "torneio"
+
+
+class MetodoSubstituicao(str, Enum):
+    PAIS = "pais"
+    MENOS_APTOS = "menos_aptos"
 
 
 @dataclass
@@ -12,6 +28,9 @@ class ResultadoExecucao:
     melhor_distancia: float
     historico_geracoes: list[float]
     tempo_execucao_segundos: float
+    metodo_aptidao: MetodoAptidao
+    metodo_selecao: MetodoSelecao
+    metodo_substituicao: MetodoSubstituicao
 
 
 def calcular_distancia_euclidiana(origem: Cidade, destino: Cidade) -> float:
@@ -48,33 +67,99 @@ def gerar_populacao_inicial(
     return populacao
 
 
+def calcular_aptidoes_translacao(distancias: list[float]) -> list[float]:
+    distancia_maxima = max(distancias)
+    aptidoes = [distancia_maxima - distancia for distancia in distancias]
+
+    if sum(aptidoes) == 0.0:
+        return [1.0] * len(distancias)
+
+    return aptidoes
+
+
+def calcular_aptidoes_escalonamento(distancias: list[float]) -> list[float]:
+    distancia_minima = min(distancias)
+    distancia_maxima = max(distancias)
+    intervalo = distancia_maxima - distancia_minima
+
+    if intervalo == 0.0:
+        return [1.0] * len(distancias)
+
+    return [(distancia_maxima - distancia) / intervalo for distancia in distancias]
+
+
+def calcular_aptidoes(
+    distancias: list[float],
+    metodo: MetodoAptidao,
+) -> list[float]:
+    if metodo == MetodoAptidao.TRANSLACAO:
+        return calcular_aptidoes_translacao(distancias)
+    return calcular_aptidoes_escalonamento(distancias)
+
+
+def selecionar_por_roleta(
+    populacao: list[list[int]],
+    aptidoes: list[float],
+) -> list[int]:
+    soma_aptidoes = sum(aptidoes)
+
+    if soma_aptidoes == 0.0:
+        probabilidades = [1.0 / len(populacao)] * len(populacao)
+    else:
+        probabilidades = [aptidao / soma_aptidoes for aptidao in aptidoes]
+
+    escolhido = random.choices(populacao, weights=probabilidades, k=1)[0]
+    return list(escolhido)
+
+
+def selecionar_por_torneio(
+    populacao: list[list[int]],
+    aptidoes: list[float],
+    tamanho_torneio: int = 2,
+) -> list[int]:
+    indices_participantes = random.sample(range(len(populacao)), tamanho_torneio)
+    indice_vencedor = max(
+        indices_participantes,
+        key=lambda indice: aptidoes[indice],
+    )
+    return list(populacao[indice_vencedor])
+
+
+def selecionar_individuo(
+    populacao: list[list[int]],
+    aptidoes: list[float],
+    metodo_selecao: MetodoSelecao,
+) -> list[int]:
+    if metodo_selecao == MetodoSelecao.TORNEIO:
+        return selecionar_por_torneio(populacao, aptidoes)
+    return selecionar_por_roleta(populacao, aptidoes)
+
+
 def selecionar_pais(
     populacao: list[list[int]],
     mapa_cidades: dict[int, Cidade],
-) -> tuple[list[tuple[list[int], list[int]]], list[int], float]:
+    metodo_aptidao: MetodoAptidao = MetodoAptidao.ESCALONAMENTO,
+    metodo_selecao: MetodoSelecao = MetodoSelecao.RODA_DA_ROLETA,
+) -> tuple[list[tuple[list[int], list[int]]], list[int], float, list[float]]:
     distancias = [
-        calcular_distancia_total(individuo, mapa_cidades)
-        for individuo in populacao
+        calcular_distancia_total(individuo, mapa_cidades) for individuo in populacao
     ]
 
     indice_melhor = min(range(len(distancias)), key=lambda i: distancias[i])
     melhor_individuo = list(populacao[indice_melhor])
     melhor_distancia = distancias[indice_melhor]
 
-    aptidoes = [1.0 / distancia for distancia in distancias]
-    soma_aptidoes = sum(aptidoes)
-    probabilidades = [aptidao / soma_aptidoes for aptidao in aptidoes]
+    aptidoes = calcular_aptidoes(distancias, metodo_aptidao)
 
     quantidade_pares = len(populacao) // 2
     pares_pais: list[tuple[list[int], list[int]]] = []
 
     for _ in range(quantidade_pares):
-        selecionados = random.choices(populacao, weights=probabilidades, k=2)
-        pai_1 = list(selecionados[0])
-        pai_2 = list(selecionados[1])
+        pai_1 = selecionar_individuo(populacao, aptidoes, metodo_selecao)
+        pai_2 = selecionar_individuo(populacao, aptidoes, metodo_selecao)
         pares_pais.append((pai_1, pai_2))
 
-    return pares_pais, melhor_individuo, melhor_distancia
+    return pares_pais, melhor_individuo, melhor_distancia, distancias
 
 
 def crossover_um_ponto(
@@ -112,6 +197,43 @@ def substituir_pais_por_filhos(filhos: list[list[int]]) -> list[list[int]]:
     return [list(filho) for filho in filhos]
 
 
+def substituir_menos_aptos(
+    populacao_atual: list[list[int]],
+    distancias_atuais: list[float],
+    filhos: list[list[int]],
+    mapa_cidades: dict[int, Cidade],
+) -> list[list[int]]:
+    distancias_filhos = [
+        calcular_distancia_total(filho, mapa_cidades) for filho in filhos
+    ]
+
+    candidatos = list(zip(populacao_atual, distancias_atuais)) + list(
+        zip(filhos, distancias_filhos)
+    )
+
+    candidatos_ordenados = sorted(candidatos, key=lambda item: item[1])
+    tamanho_populacao = len(populacao_atual)
+
+    return [list(ind) for ind, _ in candidatos_ordenados[:tamanho_populacao]]
+
+
+def substituir_populacao(
+    populacao_atual: list[list[int]],
+    distancias_atuais: list[float],
+    filhos: list[list[int]],
+    mapa_cidades: dict[int, Cidade],
+    metodo_substituicao: MetodoSubstituicao,
+) -> list[list[int]]:
+    if metodo_substituicao == MetodoSubstituicao.MENOS_APTOS:
+        return substituir_menos_aptos(
+            populacao_atual,
+            distancias_atuais,
+            filhos,
+            mapa_cidades,
+        )
+    return substituir_pais_por_filhos(filhos)
+
+
 def aplicar_mutacao(individuo: list[int], taxa_mutacao: float) -> list[int]:
     individuo_mutado = list(individuo)
 
@@ -129,10 +251,7 @@ def aplicar_mutacoes_na_populacao(
     populacao: list[list[int]],
     taxa_mutacao: float,
 ) -> list[list[int]]:
-    return [
-        aplicar_mutacao(individuo, taxa_mutacao)
-        for individuo in populacao
-    ]
+    return [aplicar_mutacao(individuo, taxa_mutacao) for individuo in populacao]
 
 
 def exibir_melhor_individuo_no_video(
@@ -153,6 +272,9 @@ def executar_algoritmo_genetico(
     tamanho_populacao: int = 100,
     total_geracoes: int = 2000,
     taxa_mutacao: float = 0.10,
+    metodo_aptidao: MetodoAptidao = MetodoAptidao.ESCALONAMENTO,
+    metodo_selecao: MetodoSelecao = MetodoSelecao.RODA_DA_ROLETA,
+    metodo_substituicao: MetodoSubstituicao = MetodoSubstituicao.MENOS_APTOS,
 ) -> ResultadoExecucao:
     tempo_inicial = time.perf_counter()
 
@@ -164,9 +286,16 @@ def executar_algoritmo_genetico(
     melhor_distancia_global = float("inf")
 
     for geracao in range(1, total_geracoes + 1):
-        pares_pais, melhor_individuo_geracao, melhor_distancia_geracao = selecionar_pais(
+        (
+            pares_pais,
+            melhor_individuo_geracao,
+            melhor_distancia_geracao,
+            distancias_populacao,
+        ) = selecionar_pais(
             populacao,
             mapa_cidades,
+            metodo_aptidao=metodo_aptidao,
+            metodo_selecao=metodo_selecao,
         )
 
         historico_geracoes.append(melhor_distancia_geracao)
@@ -183,8 +312,15 @@ def executar_algoritmo_genetico(
         )
 
         filhos = gerar_filhos_por_crossover(pares_pais)
-        populacao_substituida = substituir_pais_por_filhos(filhos)
-        populacao = aplicar_mutacoes_na_populacao(populacao_substituida, taxa_mutacao)
+        filhos_mutados = aplicar_mutacoes_na_populacao(filhos, taxa_mutacao)
+
+        populacao = substituir_populacao(
+            populacao_atual=populacao,
+            distancias_atuais=distancias_populacao,
+            filhos=filhos_mutados,
+            mapa_cidades=mapa_cidades,
+            metodo_substituicao=metodo_substituicao,
+        )
 
     tempo_final = time.perf_counter()
     tempo_execucao = tempo_final - tempo_inicial
@@ -194,4 +330,7 @@ def executar_algoritmo_genetico(
         melhor_distancia=melhor_distancia_global,
         historico_geracoes=historico_geracoes,
         tempo_execucao_segundos=tempo_execucao,
+        metodo_aptidao=metodo_aptidao,
+        metodo_selecao=metodo_selecao,
+        metodo_substituicao=metodo_substituicao,
     )

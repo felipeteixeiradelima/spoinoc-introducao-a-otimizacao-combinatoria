@@ -1,4 +1,4 @@
-# Algoritmo Genético para o Problema do Caixeiro Viajante (TSP) - Versão 1
+# Algoritmo Genético para o Problema do Caixeiro Viajante (TSP)
 
 Implementação em Python de um Algoritmo Genético para solucionar o Problema do Caixeiro Viajante (*Traveling Salesperson Problem* - TSP) para instâncias de 10 cidades, em conformidade com o conteúdo apresentado em aula.
 
@@ -13,17 +13,19 @@ Implementação em Python de um Algoritmo Genético para solucionar o Problema d
 
 ## Características da Implementação
 
-| Parâmetro | Configuração |
-| :--- | :--- |
-| **Tamanho da População** | 100 indivíduos |
-| **Codificação do Indivíduo** | Permutação com 10 cidades |
-| **Geração da População Inicial** | Aleatória |
-| **Método de Crossover** | Crossover de 1 ponto aleatório para TSP (preserva permutação) |
-| **Política de Substituição** | Substituição dos pais pelos descendentes |
-| **Taxa de Mutação** | 10% (0.10) com troca aleatória de dois alelos (*swap*) |
-| **Critério de Parada** | 2000 gerações |
-| **Cálculo da Função Objetivo** | Realizado dentro da etapa de seleção |
-| **Saída no Vídeo** | Exibição no console do melhor indivíduo e sua distância a cada geração |
+| Parâmetro | Opções Disponíveis | Padrão |
+| :--- | :--- | :--- |
+| **Tamanho da População** | 100 indivíduos | 100 |
+| **Codificação do Indivíduo** | Permutação com 10 cidades | 10 cidades |
+| **Geração da População Inicial** | Aleatória | Aleatória |
+| **Cálculo da Aptidão** | **Translação** ou **Escalonamento** | Escalonamento |
+| **Método de Seleção** | **Roda da Roleta** ou **Torneio** | Roda da Roleta |
+| **Método de Crossover** | Crossover de 1 ponto aleatório para TSP | 1 ponto aleatório |
+| **Política de Substituição** | **Substituição dos Pais** ou **Menos Aptos** | Menos Aptos |
+| **Taxa de Mutação** | 10% (0.10) com troca aleatória de dois alelos (*swap*) | 10% |
+| **Critério de Parada** | 2000 gerações | 2000 gerações |
+| **Cálculo da Função Objetivo** | Dentro da etapa de seleção | Sim |
+| **Saída no Vídeo** | Exibição no console do melhor indivíduo a cada geração | Sim |
 
 ---
 
@@ -37,8 +39,8 @@ exercicios/algoritmo_genetico_tsp/
 │   └── exemplo2.csv      # Coordenadas das 10 cidades do Exemplo 2
 │
 ├── cidade.py             # Modelo de dados da cidade e leitor de CSV
-├── algoritmo_genetico.py # Operadores genéticos e laço evolutivo
-├── main.py               # Ponto de entrada e interface com usuário
+├── algoritmo_genetico.py # Operadores genéticos, aptidão, seleção e laço evolutivo
+├── main.py               # Ponto de entrada com menu interativo e suporte a argumentos CLI
 ├── testes.py             # Suíte de testes unitários
 └── README.md             # Instruções e documentação
 ```
@@ -48,15 +50,16 @@ exercicios/algoritmo_genetico_tsp/
 ## Requisitos do Sistema
 
 - **Python**: versão 3.10 ou superior.
-- **Bibliotecas**: utiliza exclusivamente a biblioteca padrão do Python (`math`, `random`, `time`, `csv`, `dataclasses`, `unittest`). Não é necessária a instalação de pacotes externos.
+- **Bibliotecas**: utiliza exclusivamente a biblioteca padrão do Python (`math`, `random`, `time`, `csv`, `dataclasses`, `enum`, `unittest`).
+- **Linter e Formatador (opcional para desenvolvimento)**: [Ruff](https://docs.astral.sh/ruff/).
 
 ---
 
 ## Como Executar o Código
 
-### 1. Execução Interativa (com menu de seleção)
+### 1. Execução Interativa (com menus de seleção)
 
-No terminal, navegue até a pasta do exercício (ou a partir da raiz do repositório) e execute:
+No terminal, execute:
 
 ```bash
 # A partir da raiz do repositório:
@@ -67,20 +70,27 @@ cd exercicios/algoritmo_genetico_tsp
 python main.py
 ```
 
-O programa apresentará um menu para escolher qual instância resolver:
-- `1`: Exemplo 1 (`exemplo1.csv` - 10 cidades)
-- `2`: Exemplo 2 (`exemplo2.csv` - 10 cidades)
+O programa apresentará menus para configurar a execução:
+1. **Conjunto de dados**: `1` para Exemplo 1 ou `2` para Exemplo 2.
+2. **Cálculo da aptidão**: `1` para Escalonamento ou `2` para Translação.
+3. **Método de seleção**: `1` para Roda da Roleta ou `2` para Torneio.
+4. **Política de substituição**: `1` para Menos Aptos ou `2` para Pais.
 
-### 2. Execução Direta via Linha de Comando (Passando o CSV)
+*(Pressionar `Enter` seleciona automaticamente a opção padrão de cada menu)*
 
-Você também pode fornecer o caminho do arquivo CSV diretamente como argumento:
+### 2. Execução Direta via Linha de Comando (Passando Argumentos)
+
+Você pode passar os parâmetros diretamente na chamada do script:
 
 ```bash
-# Executando o Exemplo 1:
-python exercicios/algoritmo_genetico_tsp/main.py exercicios/algoritmo_genetico_tsp/dados/exemplo1.csv
+# Sintaxe:
+# python main.py [arquivo_csv] [metodo_aptidao] [metodo_selecao] [metodo_substituicao]
 
-# Executando o Exemplo 2:
-python exercicios/algoritmo_genetico_tsp/main.py exercicios/algoritmo_genetico_tsp/dados/exemplo2.csv
+# Exemplo: Escalonamento + Torneio + Menos Aptos no Exemplo 1:
+python exercicios/algoritmo_genetico_tsp/main.py exercicios/algoritmo_genetico_tsp/dados/exemplo1.csv escalonamento torneio menos_aptos
+
+# Exemplo: Translação + Roleta + Pais no Exemplo 2:
+python exercicios/algoritmo_genetico_tsp/main.py exercicios/algoritmo_genetico_tsp/dados/exemplo2.csv translacao roleta pais
 ```
 
 ### 3. Execução dos Testes Unitários
@@ -91,21 +101,36 @@ Para validar os operadores genéticos, leitura dos dados e integridade das permu
 python exercicios/algoritmo_genetico_tsp/testes.py
 ```
 
+### 4. Verificação de Código com Ruff
+
+Para rodar a verificação e formatação com o Ruff:
+
+```bash
+# Verificação de linting:
+ruff check exercicios/algoritmo_genetico_tsp/
+
+# Verificação de formatação:
+ruff format --check exercicios/algoritmo_genetico_tsp/
+```
+
 ---
 
 ## Detalhes dos Operadores Implementados
 
-1. **Cálculo da Função Objetivo dentro da Seleção**:
-   - A distância euclidiana total do circuito fechado (retornando à cidade de partida) é calculada para cada indivíduo da população dentro da função de seleção.
-   - A aptidão de cada indivíduo é obtida a partir do inverso da distância total da rota ($1 / \text{distância}$), priorizando rotas mais curtas na roleta de seleção.
+1. **Cálculo da Aptidão**:
+   - **Translação**: subtrai a avaliação de cada indivíduo do pior valor encontrado ($\tilde{f}_k = f_{\max} - f_k$), garantindo que o menos apto receba valor 0 e os mais aptos recebam valores positivos.
+   - **Escalonamento**: normaliza linearmente a aptidão no intervalo $[0, 1]$ através da fórmula $\bar{f}_k = \frac{f_{\max} - f_k}{f_{\max} - f_{\min}}$.
 
-2. **Crossover de 1 Ponto Aleatório (TSP)**:
-   - Um ponto de corte aleatório divide o primeiro pai.
-   - O primeiro filho herda o segmento inicial do Pai 1. As cidades faltantes são preenchidas respeitando a ordem de aparição no Pai 2.
-   - O segundo filho é gerado de forma simétrica (iniciando com o prefixo do Pai 2 e completando com as cidades do Pai 1).
+2. **Métodos de Seleção**:
+   - **Roda da Roleta**: probabilidade de seleção de cada indivíduo proporcional à sua aptidão ($P(i) = \text{aptidão}_i / \sum \text{aptidões}$).
+   - **Torneio**: sorteia aleatoriamente dois competidores distintos da população; o de maior aptidão vence o torneio e é selecionado como progenitor.
 
-3. **Substituição dos Pais**:
-   - Cada par de pais selecionados para reprodução é substituído pelos seus dois descendentes gerados após o crossover e mutação.
+3. **Políticas de Substituição**:
+   - **Substituição dos Pais**: os descendentes gerados após recombinação e mutação substituem diretamente os progenitores.
+   - **Substituição dos Menos Aptos**: os descendentes são adicionados à população e os indivíduos com pior aptidão são descartados, preservando os mais aptos.
 
-4. **Mutação**:
-   - Para cada indivíduo gerado, aplica-se uma probabilidade de mutação de 10%. Quando sorteado, dois alelos (cidades) em posições aleatórias têm seus lugares trocados no cromossomo.
+4. **Crossover de 1 Ponto Aleatório (TSP)**:
+   - Um ponto de corte aleatório divide o cromossomo. O filho herda o prefixo do primeiro pai e as cidades restantes são completadas conforme a ordem do segundo pai, evitando cidades duplicadas.
+
+5. **Mutação**:
+   - Probabilidade de 10% por indivíduo de sofrer troca aleatória de posição entre dois alelos (*swap*).
